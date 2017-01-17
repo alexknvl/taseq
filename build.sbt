@@ -33,6 +33,8 @@ lazy val commonSettings = List(
   wartremoverWarnings ++= Warts.all
 )
 
+val macroParadiseV = "2.0.1"
+
 lazy val root = (project in file("."))
   .settings(name := "taseq")
   .settings(commonSettings: _*)
@@ -40,3 +42,16 @@ lazy val root = (project in file("."))
   .settings(libraryDependencies ++= List(
     "com.alexknvl" %% "leibniz" % "0.2.0"
   ))
+  .settings(
+    libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
+    libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+      // if scala 2.11+ is used, quasiquotes are merged into scala-reflect
+      case Some((2, scalaMajor)) if scalaMajor >= 11 => Seq()
+      // in Scala 2.10, quasiquotes are provided by macro paradise
+      case Some((2, 10)) =>
+        Seq(
+          compilerPlugin("org.scalamacros" % "paradise" % macroParadiseV cross CrossVersion.full),
+          "org.scalamacros" %% "quasiquotes" % macroParadiseV cross CrossVersion.binary
+        )
+    })
+  )
